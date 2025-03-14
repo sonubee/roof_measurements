@@ -9,6 +9,9 @@ import os
 import ee
 import geemap
 
+# Initialize Earth Engine
+ee.Initialize()
+
 app = Flask(__name__)
 
 # Check if running on Heroku (PostgreSQL) or locally (SQLite)
