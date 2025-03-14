@@ -19,7 +19,7 @@ import json
 #ee.Initialize(project='ee-notifications3972')
 #ee.Initialize()
 
-with open('C:\Users\Sonu\Desktop\openai\venv\Scripts', 'r') as f:
+with open('C:/Users/Sonu/Desktop/openai/venv/Scripts', 'r') as f:
     service_account_credentials = json.load(f)
     ee.Initialize(credentials=service_account_credentials)
 
