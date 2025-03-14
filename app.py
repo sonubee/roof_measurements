@@ -6,6 +6,8 @@ from email.message import EmailMessage
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import os
+import ee
+import geemap
 
 app = Flask(__name__)
 
