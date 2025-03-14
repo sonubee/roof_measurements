@@ -10,6 +10,7 @@ import ee
 import geemap
 
 # Initialize Earth Engine
+ee.Authenticate()
 ee.Initialize()
 
 app = Flask(__name__)
