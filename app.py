@@ -15,7 +15,8 @@ ee.Authenticate()
 
 #service_account = 'notifications3972@gmail.com'
 #creds = ee.ServiceAccountCredentials(service_account, 'C:/Users/Sonu/AppData/Local/Google/Cloud SDK/google-cloud-sdk/bin/gcloudkey.json')
-ee.Initialize(project='Earth Engine Default Project')
+ee.Initialize(project='ee-notifications3972')
+#ee.Initialize()
 
 app = Flask(__name__)
 
