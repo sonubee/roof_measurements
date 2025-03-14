@@ -169,7 +169,7 @@ def generate():
     send_email_with_pdf(recipient_email, "Your Quote", email_content, pdf_filename)
     
     lat, lon = 37.7749, -122.4194
-    print("Roof Coming Below*********************************************************************)
+    print("Roof Coming Below*********************************************************************")
     print(calculate_roof_area(lat, lon)
 
     return f"Quote sent successfully to {recipient_email}!"
