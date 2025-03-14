@@ -26,6 +26,7 @@ folium==0.19.5
 fonttools==4.56.0
 fpdf==1.7.2
 future==1.0.0
+gcloud==0.18.3
 geemap==0.35.3
 geocoder==1.38.1
 google-api-core==2.24.2
@@ -64,6 +65,7 @@ matplotlib==3.10.1
 matplotlib-inline==0.1.7
 narwhals==1.30.0
 numpy==2.2.3
+oauth2client==4.1.3
 openai==1.66.3
 packaging==24.2
 pandas==2.2.3
