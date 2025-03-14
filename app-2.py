@@ -8,12 +8,8 @@ import os
 
 app = Flask(__name__)
 
-# Check if running on Heroku (PostgreSQL) or locally (SQLite)
-if "DATABASE_URL" in os.environ:
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"].replace("postgres://", "postgresql://", 1)  # Heroku fix
-else:
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///quotes.db"  # Local SQLite
-
+# Configure Database (SQLite)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///quotes.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
