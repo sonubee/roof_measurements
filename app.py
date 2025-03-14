@@ -11,7 +11,7 @@ import geemap
 import json
 
 # Initialize Earth Engine
-ee.Authenticate()
+#ee.Authenticate()
 #ee.Initialize()
 
 #service_account = 'notifications3972@gmail.com'
