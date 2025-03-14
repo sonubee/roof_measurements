@@ -107,6 +107,30 @@ def send_email_with_pdf(recipient_email, subject, body, pdf_filename):
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(sender_email, sender_password)
         server.send_message(msg)
+        
+# Function to calculate roof area
+def calculate_roof_area(lat, lon):
+    # Define the point for the house location
+    point = ee.Geometry.Point(lon, lat)
+
+    # Use high-resolution satellite imagery
+    image = ee.Image('COPERNICUS/S2_SR').select('B4')  # Red band for better visualization
+
+    # Thresholding to detect roof
+    roof_mask = image.gt(1000)  # Adjust threshold based on region
+    roof_area = roof_mask.multiply(ee.Image.pixelArea())
+
+    # Reduce region to get total area
+    stats = roof_area.reduceRegion(
+        reducer=ee.Reducer.sum(),
+        geometry=point.buffer(20),  # Adjust based on house size
+        scale=10,
+        maxPixels=1e9
+    )
+
+    area_m2 = stats.getInfo().get('B4', 0)  # Get roof area in square meters
+    area_ft2 = area_m2 * 10.764  # Convert to square feet
+    return round(area_ft2, 2)
 
 # Route to Home Page
 @app.route("/")
@@ -143,6 +167,10 @@ def generate():
 
     # Send Email with PDF
     send_email_with_pdf(recipient_email, "Your Quote", email_content, pdf_filename)
+    
+    lat, lon = 37.7749, -122.4194
+    print("Roof Coming Below*********************************************************************)
+    print(calculate_roof_area(lat, lon)
 
     return f"Quote sent successfully to {recipient_email}!"
 
