@@ -170,7 +170,7 @@ def generate():
     
     lat, lon = 37.7749, -122.4194
     print("Roof Coming Below*********************************************************************")
-    print(calculate_roof_area(lat, lon)
+    print(calculate_roof_area(lat, lon))
 
     return f"Quote sent successfully to {recipient_email}!"
 
