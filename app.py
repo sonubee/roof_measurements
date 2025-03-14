@@ -8,6 +8,7 @@ from flask_migrate import Migrate
 import os
 import ee
 import geemap
+import json
 
 # Initialize Earth Engine
 ee.Authenticate()
@@ -15,8 +16,12 @@ ee.Authenticate()
 
 #service_account = 'notifications3972@gmail.com'
 #creds = ee.ServiceAccountCredentials(service_account, 'C:/Users/Sonu/AppData/Local/Google/Cloud SDK/google-cloud-sdk/bin/gcloudkey.json')
-ee.Initialize(project='ee-notifications3972')
+#ee.Initialize(project='ee-notifications3972')
 #ee.Initialize()
+
+with open('gcloudkey.json', 'r') as f:
+        service_account_credentials = json.load(f)
+    ee.Initialize(credentials=service_account_credentials)
 
 app = Flask(__name__)
 
