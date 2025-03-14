@@ -4,6 +4,7 @@ from fpdf import FPDF
 import smtplib
 from email.message import EmailMessage
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import os
 
 app = Flask(__name__)
@@ -16,6 +17,7 @@ else:
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)  # Initialize Flask-Migrate
 
 # Define Database Model
 class Quote(db.Model):
