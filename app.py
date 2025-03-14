@@ -11,7 +11,11 @@ import geemap
 
 # Initialize Earth Engine
 ee.Authenticate()
-ee.Initialize()
+#ee.Initialize()
+
+service_account = 'notifications3972@gmail.com'
+creds = ee.ServiceAccountCredentials(service_account, 'C:\Users\Sonu\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin\gcloudkey.json')
+ee.Initialize(creds)
 
 app = Flask(__name__)
 
