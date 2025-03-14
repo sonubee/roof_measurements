@@ -20,7 +20,7 @@ ee.Authenticate()
 #ee.Initialize()
 
 with open('gcloudkey.json', 'r') as f:
-        service_account_credentials = json.load(f)
+    service_account_credentials = json.load(f)
     ee.Initialize(credentials=service_account_credentials)
 
 app = Flask(__name__)
