@@ -189,6 +189,8 @@ def download_roof_image(lat, lon, filename="roof_image.png"):
     Returns:
         str: File path of the downloaded image.
     """
+    
+    print("here11")
 
     # Define the point for the house location
     point = ee.Geometry.Point(lon, lat)
@@ -210,6 +212,8 @@ def download_roof_image(lat, lon, filename="roof_image.png"):
     # Overlay detected roof area in red
     roof_overlay = true_color.visualize(min=0, max=3000) \
         .blend(roof_mask.visualize(palette=["FF0000"], opacity=0.5))  # Red roof area
+        
+    print("here11.5")
 
     # Define the export region (adjust buffer size)
     region = point.buffer(50).bounds()
@@ -263,7 +267,11 @@ def generate():
 
     return f"Quote sent successfully to {recipient_email}!"
     
+    print("here10")
+    
     image_path = download_roof_image(lat, lon, filename="roof_measurement.png")
+    
+    print("here12")
 
     print(f"Roof measurement image saved at: {image_path}")
 
