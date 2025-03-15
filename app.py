@@ -176,33 +176,50 @@ def calculate_roof_area(lat, lon):
 
     # Return the estimated roof area in square feet
     return round(area_ft2, 2)
-        
-'''
-# Function to calculate roof area
-def calculate_roof_area(lat, lon):
+    
+def download_roof_image(lat, lon, filename="roof_image.png"):
+    """
+    Downloads a satellite image of the house with the detected roof area.
+    
+    Args:
+        lat (float): Latitude of the house.
+        lon (float): Longitude of the house.
+        filename (str): Name of the output image file.
+    
+    Returns:
+        str: File path of the downloaded image.
+    """
+
     # Define the point for the house location
     point = ee.Geometry.Point(lon, lat)
 
-    # Use high-resolution satellite imagery
-    #image = ee.Image('COPERNICUS/S2_SR_HARMONIZED').select('B4')  # Red band for better visualization
-    image = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED').select('B4')  # Red band for better visualization
+    # Load the most recent Sentinel-2 image
+    collection = ee.ImageCollection("COPERNICUS/S2_SR") \
+        .filterBounds(point) \
+        .filterDate("2024-01-01", "2024-12-31") \
+        .sort("system:time_start", False)
 
-    # Thresholding to detect roof
-    roof_mask = image.gt(1000)  # Adjust threshold based on region
-    roof_area = roof_mask.multiply(ee.Image.pixelArea())
+    latest_image = collection.first()
 
-    # Reduce region to get total area
-    stats = roof_area.reduceRegion(
-        reducer=ee.Reducer.sum(),
-        geometry=point.buffer(20),  # Adjust based on house size
-        scale=10,
-        maxPixels=1e9
-    )
+    # Select RGB Bands (True Color)
+    true_color = latest_image.select(["B4", "B3", "B2"])  # Red, Green, Blue
 
-    area_m2 = stats.getInfo().get('B4', 0)  # Get roof area in square meters
-    area_ft2 = area_m2 * 10.764  # Convert to square feet
-    return round(area_ft2, 2)
-'''
+    # Apply a threshold to detect the roof area
+    roof_mask = latest_image.select("B4").gt(1000)  # Adjust threshold if necessary
+
+    # Overlay detected roof area in red
+    roof_overlay = true_color.visualize(min=0, max=3000) \
+        .blend(roof_mask.visualize(palette=["FF0000"], opacity=0.5))  # Red roof area
+
+    # Define the export region (adjust buffer size)
+    region = point.buffer(50).bounds()
+
+    # Download image using geemap
+    output_file = f"./{filename}"
+    geemap.ee_export_image(roof_overlay, filename=output_file, scale=10, region=region, file_per_band=False)
+
+    return output_file
+
 # Route to Home Page
 @app.route("/")
 def home():
@@ -245,6 +262,10 @@ def generate():
     print(calculate_roof_area(lat, lon))
 
     return f"Quote sent successfully to {recipient_email}!"
+    
+    image_path = download_roof_image(lat, lon, filename="roof_measurement.png")
+
+    print(f"Roof measurement image saved at: {image_path}")
 
 # Run the Flask app
 if __name__ == "__main__":
