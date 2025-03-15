@@ -18,10 +18,12 @@ import json
 #creds = ee.ServiceAccountCredentials(service_account, 'C:/Users/Sonu/AppData/Local/Google/Cloud SDK/google-cloud-sdk/bin/gcloudkey.json')
 #ee.Initialize(project='ee-notifications3972')
 #ee.Initialize()
-
+'''
 with open('gcloudkey.json', 'r') as f:
     service_account_credentials = json.load(f)
     ee.Initialize(credentials=service_account_credentials,project='ee-notifications3972')
+'''
+
 
 app = Flask(__name__)
 
