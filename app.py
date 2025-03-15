@@ -134,7 +134,8 @@ def calculate_roof_area(lat, lon):
     point = ee.Geometry.Point(lon, lat)
 
     # Use high-resolution satellite imagery
-    image = ee.Image('COPERNICUS/S2_SR_HARMONIZED').select('B4')  # Red band for better visualization
+    #image = ee.Image('COPERNICUS/S2_SR_HARMONIZED').select('B4')  # Red band for better visualization
+    image = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED').select('B4')  # Red band for better visualization
 
     # Thresholding to detect roof
     roof_mask = image.gt(1000)  # Adjust threshold based on region
