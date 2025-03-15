@@ -240,7 +240,7 @@ def generate():
     send_email_with_pdf(recipient_email, "Your Quote", email_content, pdf_filename)
     
     #lat, lon = 37.7749, -122.4194
-    lat, lon = 37.4025798, -121.824948
+    lat, lon = 37.402572004102694, -121.8223697685583
     print("Roof Coming Below*********************************************************************")
     print(calculate_roof_area(lat, lon))
 
