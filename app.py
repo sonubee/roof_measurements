@@ -130,6 +130,54 @@ def send_email_with_pdf(recipient_email, subject, body, pdf_filename):
         server.login(sender_email, sender_password)
         server.send_message(msg)
         
+def calculate_roof_area(lat, lon):
+    """
+    Calculates the approximate roof area in square feet for a given location.
+    
+    Args:
+        lat (float): Latitude of the house.
+        lon (float): Longitude of the house.
+    
+    Returns:
+        float: Estimated roof area in square feet.
+    """
+    
+    # Define the point for the house location
+    point = ee.Geometry.Point(lon, lat)
+
+    # Load the most recent Sentinel-2 image (Surface Reflectance)
+    collection = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
+        .filterBounds(point) \
+        .filterDate("2024-01-01", "2024-12-31") \
+        .sort("system:time_start", False)
+
+    latest_image = collection.first()  # Get the most recent image
+
+    # Select Red Band (B4) - Useful for rooftop detection
+    red_band = latest_image.select("B4")
+
+    # Apply a threshold to segment the roof (Adjust this value if necessary)
+    roof_mask = red_band.gt(1000)  # Threshold might need fine-tuning based on location
+    roof_area = roof_mask.multiply(ee.Image.pixelArea())  # Convert to area (m²)
+
+    # Calculate the total roof area using reduceRegion
+    stats = roof_area.reduceRegion(
+        reducer=ee.Reducer.sum(),
+        geometry=point.buffer(20),  # Adjust buffer size based on roof area
+        scale=10,  # Sentinel-2 resolution is 10m per pixel
+        maxPixels=1e9
+    )
+
+    # Extract area in square meters
+    area_m2 = stats.getInfo().get("B4", 0)  # Retrieve roof area (m²)
+
+    # Convert square meters to square feet (1 m² = 10.764 ft²)
+    area_ft2 = area_m2 * 10.764
+
+    # Return the estimated roof area in square feet
+    return round(area_ft2, 2)
+        
+'''
 # Function to calculate roof area
 def calculate_roof_area(lat, lon):
     # Define the point for the house location
@@ -154,7 +202,7 @@ def calculate_roof_area(lat, lon):
     area_m2 = stats.getInfo().get('B4', 0)  # Get roof area in square meters
     area_ft2 = area_m2 * 10.764  # Convert to square feet
     return round(area_ft2, 2)
-
+'''
 # Route to Home Page
 @app.route("/")
 def home():
