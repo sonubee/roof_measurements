@@ -27,6 +27,8 @@ service_account = 'first-key@ee-notifications3972.iam.gserviceaccount.com'
 credentials = ee.ServiceAccountCredentials(service_account, 'ee-notifications3972-a04ee465a57f.json')
 ee.Initialize(credentials)
 
+print("INITIALIZED$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+
 app = Flask(__name__)
 
 # Check if running on Heroku (PostgreSQL) or locally (SQLite)
