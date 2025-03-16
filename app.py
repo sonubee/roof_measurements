@@ -278,6 +278,8 @@ def generate():
     print("here12")
 
     print(f"Roof measurement image saved at: {image_path}")
+    
+    print("here13")
 
 # Run the Flask app
 if __name__ == "__main__":
