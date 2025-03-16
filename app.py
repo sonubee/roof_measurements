@@ -350,6 +350,8 @@ def generate():
     print(result)
     
     print("here14")
+    
+    return "This is a valid response"  # Return a string
 
 # Run the Flask app
 if __name__ == "__main__":
