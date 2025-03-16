@@ -224,7 +224,7 @@ def download_roof_image(lat, lon, filename="roof_image.tif"):
 
     return output_file
     
-def save_roof_image_to_drive(lat, lon, filename="roof_measurement"):
+def save_roof_image_to_drive(lat, lon, filename="roof_measurement2"):
     """
     Saves the roof measurement image directly to Google Drive.
     
