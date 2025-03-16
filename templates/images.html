@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roof Images</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        table { width: 80%; margin: auto; border-collapse: collapse; }
+        th, td { border: 1px solid black; padding: 10px; }
+        img { width: 200px; height: auto; }
+    </style>
+</head>
+<body>
+    <h1>Roof Measurement Images</h1>
+    <table>
+        <tr>
+            <th>Customer</th>
+            <th>Roof Area (sq ft)</th>
+            <th>Image</th>
+            <th>Download</th>
+        </tr>
+        {% for quote in quotes %}
+        <tr>
+            <td>{{ quote.customer_name }}</td>
+            <td>{{ quote.roof_square_feet if quote.roof_square_feet else 'N/A' }}</td>
+            <td>
+                {% if quote.roof_image_url %}
+                    <img src="{{ quote.roof_image_url }}" alt="Roof Image">
+                {% else %}
+                    No Image
+                {% endif %}
+            </td>
+            <td>
+                {% if quote.roof_image_url %}
+                    <a href="{{ quote.roof_image_url }}" download>Download</a>
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

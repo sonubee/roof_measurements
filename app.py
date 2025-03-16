@@ -1,33 +1,25 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 import openai
 from fpdf import FPDF
 import smtplib
 from email.message import EmailMessage
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 import os
 import ee
 import geemap
 import json
 
-# Initialize Earth Engine
-#ee.Authenticate()
-#ee.Initialize()
-
-#service_account = 'notifications3972@gmail.com'
-#creds = ee.ServiceAccountCredentials(service_account, 'C:/Users/Sonu/AppData/Local/Google/Cloud SDK/google-cloud-sdk/bin/gcloudkey.json')
-#ee.Initialize(project='ee-notifications3972')
-#ee.Initialize()
-'''
-with open('gcloudkey.json', 'r') as f:
-    service_account_credentials = json.load(f)
-    ee.Initialize(credentials=service_account_credentials,project='ee-notifications3972')
-'''
 service_account = 'first-key@ee-notifications3972.iam.gserviceaccount.com'
 credentials = ee.ServiceAccountCredentials(service_account, 'ee-notifications3972-a04ee465a57f.json')
 ee.Initialize(credentials)
 
-print("INITIALIZED$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+print("INITIALIZED$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$2")
+
+# Configure OpenAI API Key
+openai.api_key = "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"
 
 app = Flask(__name__)
 
@@ -39,6 +31,7 @@ else:
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
+
 migrate = Migrate(app, db)  # Initialize Flask-Migrate
 
 # Define Database Model
@@ -50,13 +43,16 @@ class Quote(db.Model):
     price = db.Column(db.Float, nullable=False)
     validity = db.Column(db.Integer, nullable=False)
     pdf_filename = db.Column(db.String(100), nullable=False)
+    roof_square_feet = db.Column(db.Float, nullable=True)  # Roof Area
+    roof_image_url = db.Column(db.String(255), nullable=True)  # Store Image URL
 
 # Initialize Database
 with app.app_context():
     db.create_all()
-
-# Configure OpenAI API Key
-openai.api_key = "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"
+    
+# Initialize Flask-Admin
+admin = Admin(app, name="Quote Admin", template_mode="bootstrap3")
+admin.add_view(ModelView(Quote, db.session))
 
 # Function to generate AI-powered email
 def generate_quote_email(customer_name, product_details, price, validity):
@@ -224,7 +220,70 @@ def download_roof_image(lat, lon, filename="roof_image.tif"):
 
     return output_file
     
-def save_roof_image_to_drive(lat, lon, filename="roof_measurement2"):
+def save_roof_image_to_drive(lat, lon, filename="roof_measurement3"):
+    """
+    Saves the roof measurement image directly to Google Drive using a service account.
+    
+    Args:
+        lat (float): Latitude of the house.
+        lon (float): Longitude of the house.
+        filename (str): Name of the output image file (without extension).
+    
+    Returns:
+        str: Google Drive file URL.
+    """
+
+    # Define the point for the house location
+    point = ee.Geometry.Point(lon, lat)
+
+    # Load the most recent Sentinel-2 image
+    collection = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
+        .filterBounds(point) \
+        .filterDate("2024-01-01", "2024-12-31") \
+        .sort("system:time_start", False)
+
+    latest_image = collection.first()
+
+    # Select RGB Bands (True Color)
+    true_color = latest_image.select(["B4", "B3", "B2"])  # Red, Green, Blue
+
+    # Apply a threshold to detect the roof area
+    roof_mask = latest_image.select("B4").gt(1000)  # Adjust threshold if necessary
+
+    # Overlay detected roof area in red
+    roof_overlay = true_color.visualize(min=0, max=3000) \
+        .blend(roof_mask.visualize(palette=["FF0000"], opacity=0.5))  # Red roof area
+
+    # Define the export region (adjust buffer size)
+    region = point.buffer(50).bounds()
+
+    # Export image to Google Drive
+    task = ee.batch.Export.image.toDrive(
+        image=roof_overlay,
+        description=filename,
+        folder="EarthEngineExports",  # Folder in Google Drive
+        fileNamePrefix=filename,
+        scale=10,
+        region=region,
+        fileFormat="GEO_TIFF"
+    )
+
+    # Start the export task
+    task.start()
+
+    # Generate Google Drive public URL
+    drive_url = f"https://drive.google.com/uc?id={filename}"
+
+    # Store URL in database
+    quote = Quote.query.filter_by(customer_name="Example Customer").first()
+    if quote:
+        quote.roof_image_url = drive_url
+        db.session.commit()
+
+    return f"Export started: Image will be available at {drive_url}"
+
+'''
+def save_roof_image_to_drive(lat, lon, filename="roof_measurement3"):
     """
     Saves the roof measurement image directly to Google Drive.
     
@@ -288,7 +347,7 @@ def save_roof_image_to_drive(lat, lon, filename="roof_measurement2"):
     print("here13.91")
     
     return f"Export started: Check Google Drive folder 'EarthEngineExports' for {filename}.png"
-
+'''
 # Route to Home Page
 @app.route("/")
 def home():
@@ -352,6 +411,18 @@ def generate():
     print("here14")
     
     return "This is a valid response"  # Return a string
+    
+# Route to View & Download Images
+@app.route("/images")
+def list_images():
+    quotes = Quote.query.all()
+    return render_template("images.html", quotes=quotes)
+
+@app.route("/download/<filename>")
+def download_image(filename):
+    """Download an image from the static/images directory."""
+    file_path = os.path.join("static/images", filename)
+    return send_file(file_path, as_attachment=True)
 
 # Run the Flask app
 if __name__ == "__main__":
