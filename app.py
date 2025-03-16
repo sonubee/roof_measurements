@@ -269,7 +269,7 @@ def generate():
     
     print("here9")
 
-    return f"Quote sent successfully to {recipient_email}!"
+    #return f"Quote sent successfully to {recipient_email}!"
     
     print("here10")
     
