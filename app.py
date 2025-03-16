@@ -177,7 +177,7 @@ def calculate_roof_area(lat, lon):
     # Return the estimated roof area in square feet
     return round(area_ft2, 2)
     
-def download_roof_image(lat, lon, filename="roof_image.png"):
+def download_roof_image(lat, lon, filename="roof_image.tif"):
     """
     Downloads a satellite image of the house with the detected roof area.
     
@@ -196,7 +196,7 @@ def download_roof_image(lat, lon, filename="roof_image.png"):
     point = ee.Geometry.Point(lon, lat)
 
     # Load the most recent Sentinel-2 image
-    collection = ee.ImageCollection("COPERNICUS/S2_SR") \
+    collection = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
         .filterBounds(point) \
         .filterDate("2024-01-01", "2024-12-31") \
         .sort("system:time_start", False)
@@ -273,7 +273,7 @@ def generate():
     
     print("here10")
     
-    image_path = download_roof_image(lat, lon, filename="roof_measurement.png")
+    image_path = download_roof_image(lat, lon, filename="roof_measurement.tif")
     
     print("here12")
 
