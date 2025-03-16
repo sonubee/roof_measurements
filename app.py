@@ -277,7 +277,7 @@ def save_roof_image_to_drive(lat, lon, filename="roof_measurement"):
         fileNamePrefix=filename,
         scale=10,
         region=region,
-        fileFormat="TIFF"
+        fileFormat="GEO_TIFF"
     )
     
     print("here13.9")
