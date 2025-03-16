@@ -223,6 +223,58 @@ def download_roof_image(lat, lon, filename="roof_image.tif"):
     geemap.ee_export_image(roof_overlay, filename=output_file, scale=10, region=region, file_per_band=False)
 
     return output_file
+    
+def save_roof_image_to_drive(lat, lon, filename="roof_measurement"):
+    """
+    Saves the roof measurement image directly to Google Drive.
+    
+    Args:
+        lat (float): Latitude of the house.
+        lon (float): Longitude of the house.
+        filename (str): Name of the output image file (without extension).
+    
+    Returns:
+        str: Google Drive file name.
+    """
+
+    # Define the point for the house location
+    point = ee.Geometry.Point(lon, lat)
+
+    # Load the most recent Sentinel-2 image
+    collection = ee.ImageCollection("COPERNICUS/S2_SR") \
+        .filterBounds(point) \
+        .filterDate("2024-01-01", "2024-12-31") \
+        .sort("system:time_start", False)
+
+    latest_image = collection.first()
+
+    # Select RGB Bands (True Color)
+    true_color = latest_image.select(["B4", "B3", "B2"])  # Red, Green, Blue
+
+    # Apply a threshold to detect the roof area
+    roof_mask = latest_image.select("B4").gt(1000)  # Adjust threshold if necessary
+
+    # Overlay detected roof area in red
+    roof_overlay = true_color.visualize(min=0, max=3000) \
+        .blend(roof_mask.visualize(palette=["FF0000"], opacity=0.5))  # Red roof area
+
+    # Define the export region (adjust buffer size)
+    region = point.buffer(50).bounds()
+
+    # Export image to Google Drive
+    task = ee.batch.Export.image.toDrive(
+        image=roof_overlay,
+        description=filename,
+        folder="EarthEngineExports",  # Folder in Google Drive
+        fileNamePrefix=filename,
+        scale=10,
+        region=region,
+        fileFormat="PNG"
+    )
+
+    # Start the export task
+    task.start()
+    return f"Export started: Check Google Drive folder 'EarthEngineExports' for {filename}.png"
 
 # Route to Home Page
 @app.route("/")
@@ -280,6 +332,11 @@ def generate():
     print(f"Roof measurement image saved at: {image_path}")
     
     print("here13")
+    
+    result = save_roof_image_to_drive(lat, lon)
+    print(result)
+    
+    print("here14")
 
 # Run the Flask app
 if __name__ == "__main__":
