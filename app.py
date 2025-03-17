@@ -23,6 +23,9 @@ openai.api_key = "sk-proj-4BCB0ebuP8Dw_GWeXvlM0F9oCXhE2WSDFNhk12MhlwK-TuZ7SfRdvI
 
 app = Flask(__name__)
 
+# Set a secret key (Make sure this is unique and secret)
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "your-very-secret-key")  # Use an environment variable or fallback
+
 # Check if running on Heroku (PostgreSQL) or locally (SQLite)
 if "DATABASE_URL" in os.environ:
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"].replace("postgres://", "postgresql://", 1)  # Heroku fix
