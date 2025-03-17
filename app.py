@@ -213,6 +213,8 @@ def download_roof_image(lat, lon, filename="roof_image.tif"):
 
     # Define the export region (adjust buffer size)
     region = point.buffer(50).bounds()
+    
+    print("here11.51")
 
     # Download image using geemap
     output_file = f"./{filename}"
