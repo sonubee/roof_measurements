@@ -251,7 +251,7 @@ def save_roof_image_to_drive(lat, lon, filename="roof_measurement4"):
         .sort("system:time_start", False)
 
     latest_image = collection.first()
-'''
+
     # Select RGB Bands (True Color)
     true_color = latest_image.select(["B4", "B3", "B2"])  # Red, Green, Blue
 
@@ -264,7 +264,7 @@ def save_roof_image_to_drive(lat, lon, filename="roof_measurement4"):
 
     # Define the export region (adjust buffer size)
     region = point.buffer(50).bounds()
-'''
+
     # Export image to Google Drive
     task = ee.batch.Export.image.toDrive(
         image=roof_overlay,
