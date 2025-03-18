@@ -192,7 +192,7 @@ def save_raw_image_to_drive(lat, lon, filename="raw_satellite_image"):
         str: Google Drive file name.
     """
     filename = generate_unique_id()
-    print(lat + " + " + lon)
+    print(lat, " + ", lon)
 
     # Define the point for the house location
     point = ee.Geometry.Point(lon, lat)
