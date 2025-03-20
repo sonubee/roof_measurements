@@ -14,6 +14,12 @@ import json
 import uuid
 import sys
 import logging
+import requests
+import cv2
+import numpy as np
+import torch
+from ultralytics import YOLO
+import matplotlib.pyplot as plt
 
 service_account = 'first-key@ee-notifications3972.iam.gserviceaccount.com'
 credentials = ee.ServiceAccountCredentials(service_account, 'ee-notifications3972-a04ee465a57f.json')
@@ -131,53 +137,6 @@ def send_email_with_pdf(recipient_email, subject, body, pdf_filename):
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(sender_email, sender_password)
         server.send_message(msg)
-        
-def calculate_roof_area(lat, lon):
-    """
-    Calculates the approximate roof area in square feet for a given location.
-    
-    Args:
-        lat (float): Latitude of the house.
-        lon (float): Longitude of the house.
-    
-    Returns:
-        float: Estimated roof area in square feet.
-    """
-    
-    # Define the point for the house location
-    point = ee.Geometry.Point(lon, lat)
-
-    # Load the most recent Sentinel-2 image (Surface Reflectance)
-    collection = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
-        .filterBounds(point) \
-        .filterDate("2024-01-01", "2024-12-31") \
-        .sort("system:time_start", False)
-
-    latest_image = collection.first()  # Get the most recent image
-
-    # Select Red Band (B4) - Useful for rooftop detection
-    red_band = latest_image.select("B4")
-
-    # Apply a threshold to segment the roof (Adjust this value if necessary)
-    roof_mask = red_band.gt(1000)  # Threshold might need fine-tuning based on location
-    roof_area = roof_mask.multiply(ee.Image.pixelArea())  # Convert to area (m²)
-
-    # Calculate the total roof area using reduceRegion
-    stats = roof_area.reduceRegion(
-        reducer=ee.Reducer.sum(),
-        geometry=point.buffer(20),  # Adjust buffer size based on roof area
-        scale=10,  # Sentinel-2 resolution is 10m per pixel
-        maxPixels=1e9
-    )
-
-    # Extract area in square meters
-    area_m2 = stats.getInfo().get("B4", 0)  # Retrieve roof area (m²)
-
-    # Convert square meters to square feet (1 m² = 10.764 ft²)
-    area_ft2 = area_m2 * 10.764
-
-    # Return the estimated roof area in square feet
-    return round(area_ft2, 2)
     
 def save_raw_image_to_drive(lat, lon, filename="raw_satellite_image"):
     """
@@ -197,32 +156,89 @@ def save_raw_image_to_drive(lat, lon, filename="raw_satellite_image"):
     # Define the point for the house location
     point = ee.Geometry.Point(lon, lat)
 
-    # Load the most recent Sentinel-2 image (Surface Reflectance)
-    collection = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
+    # Use NAIP imagery (USA only, 1m resolution)
+    collection = ee.ImageCollection("USDA/NAIP/DOQQ") \
         .filterBounds(point) \
-        .filterDate("2024-01-01", "2024-12-31") \
-        .sort("system:time_start", False)
+        .filterDate("2022-01-01", "2024-12-31") \
+        .sort("system:time_start", False)  # Get latest image
 
     latest_image = collection.first()
 
-    # Define the export region (around the house)
-    region = point.buffer(50).bounds()
+    # Select RGB bands (NAIP bands are ["R", "G", "B", "N"])
+    roof_image = latest_image.select(["R", "G", "B"])
 
-    # Export image to Google Drive as RAW GeoTIFF
+    # Define export region (increase buffer for larger area)
+    region = point.buffer(15).bounds()  # Adjust based on house size
+
+    # Export image to Google Drive
     task = ee.batch.Export.image.toDrive(
-        image=latest_image,  # No modifications
+        image=roof_image.toUint16(),
         description=filename,
-        folder="EarthEngineExports",  # Google Drive folder
+        folder="EarthEngineExports",
         fileNamePrefix=filename,
-        scale=10,
+        scale=1,  # 1m resolution
         region=region,
-        fileFormat="GeoTIFF"  # Exporting raw data as GeoTIFF
+        fileFormat="GEO_TIFF"
     )
+
 
     # Start the export task
     task.start()
+    
+    print("Export started: Image will be available in Google Drive folder 'EarthEngineExports' as ", filename, ".tif")
 
     return f"Export started: Image will be available in Google Drive folder 'EarthEngineExports' as {filename}.tif"
+    
+def download_google_maps_satellite(lat, lon):
+    """
+    Downloads a high-resolution satellite image from Google Static Maps API.
+    """
+    API_KEY = "AIzaSyBPl2BN22N1olCSEKphDwv822foR4PlYF4"  # Replace with your API key
+    ZOOM = 20  # Max zoom for high detail (adjust if needed)
+    SIZE = "640x640"  # Max image size (you can stitch multiple images for ultra-high res)
+    MAP_TYPE = "satellite"
+    
+    filename = generate_unique_id()
+    filename = filename + ".png"
+    print(lat, " + ", lon)
+
+    url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lon}&zoom={ZOOM}&size={SIZE}&maptype={MAP_TYPE}&key={API_KEY}"
+
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        with open(filename, "wb") as f:
+            f.write(response.content)
+        print(f"High-resolution image saved as {filename}")
+    else:
+        print("Error downloading image:", response.status_code)
+        
+# Function to detect roofs using YOLOv8
+def detect_roofs(image_path, output_path="roof_detected.png"):
+    # Load YOLOv8 pre-trained model (best for object detection)
+    model = YOLO("yolov8n.pt")  # Use "yolov8m.pt" for better accuracy
+
+    # Load image
+    image = cv2.imread(image_path)
+
+    # Run inference
+    results = model(image)
+
+    # Draw detections on image
+    for result in results:
+        for box in result.boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            conf = box.conf[0]
+            label = f"Roof ({conf:.2f})"
+            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+    # Save & show image with detections
+    cv2.imwrite(output_path, image)
+    plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    plt.axis("off")
+    plt.show()
+    print(f"Roof detection saved as {output_path}")
 
 def generate_unique_id():
     """Generates a unique ID using uuid4."""
@@ -264,14 +280,9 @@ def generate():
     # Send Email with PDF
     send_email_with_pdf(recipient_email, "Your Quote", email_content, pdf_filename)
     
-    #lat, lon = 37.402572004102694, -121.8223697685583
-    lat, lon = 37.7749, -122.4194  # Example: San Francisco
+    lat, lon = 37.402572004102694, -121.8223697685583
+    #lat, lon = 37.7749, -122.4194  # Example: San Francisco
     print("Roof Coming Below*********************************************************************")
-    
-    print("here8")
-    #print(calculate_roof_area(lat, lon))
-    
-    print("here9")
     
     # Example Usage
 
@@ -279,6 +290,8 @@ def generate():
     print(result)
     
     print("here14")
+    
+    detect_roofs("1ff95725-5cbb-436d-a934-e035fdce4ee9.png")
     
     return "This is a valid response"  # Return a string
     
