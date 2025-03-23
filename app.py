@@ -23,6 +23,7 @@ from get_coord import Geocoding
 from aiemail import Open
 from gen_pdf import GenPDF
 from send_email import Email
+from sat_image import Sat_Image
 
 service_account = 'first-key@ee-notifications3972.iam.gserviceaccount.com'
 credentials = ee.ServiceAccountCredentials(service_account, 'ee-notifications3972-a04ee465a57f.json')
@@ -68,72 +69,6 @@ with app.app_context():
 # Initialize Flask-Admin
 admin = Admin(app, name="Quote Admin", template_mode="bootstrap3")
 admin.add_view(ModelView(Quote, db.session))
-    
-def save_raw_image_to_drive(lat, lon):
-    filename = generate_unique_id()
-    print(lat, " + ", lon)
-
-    # Define the point for the house location
-    point = ee.Geometry.Point(lon, lat)
-
-    # Use NAIP imagery (USA only, 1m resolution)
-    collection = ee.ImageCollection("USDA/NAIP/DOQQ") \
-        .filterBounds(point) \
-        .filterDate("2022-01-01", "2024-12-31") \
-        .sort("system:time_start", False)  # Get latest image
-
-    latest_image = collection.first()
-
-    # Select RGB bands (NAIP bands are ["R", "G", "B", "N"])
-    roof_image = latest_image.select(["R", "G", "B"])
-
-    # Define export region (increase buffer for larger area)
-    region = point.buffer(15).bounds()  # Adjust based on house size
-
-    # Export image to Google Drive
-    task = ee.batch.Export.image.toDrive(
-        image=roof_image.toUint16(),
-        description=filename,
-        folder="EarthEngineExports",
-        fileNamePrefix=filename,
-        scale=1,  # 1m resolution
-        region=region,
-        fileFormat="GEO_TIFF"
-    )
-
-
-    # Start the export task
-    task.start()
-    
-    print("Export started: Image will be available in Google Drive folder 'EarthEngineExports' as ", filename, ".tif")
-
-    return f"Export started: Image will be available in Google Drive folder 'EarthEngineExports' as {filename}.tif"
-    
-def download_google_maps_satellite(lat, lon):
-    """
-    Downloads a high-resolution satellite image from Google Static Maps API.
-    """
-    API_KEY = "AIzaSyBPl2BN22N1olCSEKphDwv822foR4PlYF4"  # Replace with your API key
-    ZOOM = 20  # Max zoom for high detail (adjust if needed)
-    SIZE = "640x640"  # Max image size (you can stitch multiple images for ultra-high res)
-    MAP_TYPE = "satellite"
-    
-    filename = generate_unique_id()
-    filename = filename + ".png"
-    print(lat, " + ", lon)
-
-    url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lon}&zoom={ZOOM}&size={SIZE}&maptype={MAP_TYPE}&key={API_KEY}"
-
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        with open(filename, "wb") as f:
-            f.write(response.content)
-        print(f"High-resolution image saved as {filename}")
-    else:
-        print("Error downloading image:", response.status_code)
-        
-    return filename
     
 def infer_krzak(filename3):
     # define the image url to use for inference
@@ -287,14 +222,9 @@ def generate():
     lat, lon = Geocoding.get_lat_lon(address, api_key)
     print(f"Latitude: {lat}, Longitude: {lon}")
     
-    # Example Usage
-
-    #result = save_raw_image_to_drive(lat, lon)
-    #print(result)
-    
     print("here14")
     
-    filename2 = download_google_maps_satellite(lat, lon)
+    filename2 = Sat_Image.download_google_maps_satellite(lat, lon)
     print(filename2)
     
     infer_krzak(filename2)
