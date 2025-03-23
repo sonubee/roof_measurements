@@ -1,8 +1,5 @@
 from flask import Flask, render_template, request, send_file
 import openai
-from fpdf import FPDF
-import smtplib
-from email.message import EmailMessage
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_admin import Admin
@@ -20,17 +17,18 @@ import numpy as np
 import torch
 from ultralytics import YOLO
 import matplotlib.pyplot as plt
-#from inference import get_model
-#import supervision as sv
-from roboflow import Roboflow
 from PIL import Image
+from roboflow import Roboflow
 from get_coord import Geocoding
+from aiemail import Open
+from gen_pdf import GenPDF
+from send_email import Email
 
 service_account = 'first-key@ee-notifications3972.iam.gserviceaccount.com'
 credentials = ee.ServiceAccountCredentials(service_account, 'ee-notifications3972-a04ee465a57f.json')
 ee.Initialize(credentials)
 
-print("INITIALIZED$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$2")
+print("INITIALIZED")
 
 # Configure OpenAI API Key
 openai.api_key = "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"
@@ -70,91 +68,8 @@ with app.app_context():
 # Initialize Flask-Admin
 admin = Admin(app, name="Quote Admin", template_mode="bootstrap3")
 admin.add_view(ModelView(Quote, db.session))
-
-# Function to generate AI-powered email
-def generate_quote_email(customer_name, product_details, price, validity):
-    prompt = f"""
-    Generate a professional email to {customer_name} for a quote.
-    - Product/Service: {product_details}
-    - Price: ${price}
-    - Quote Validity: {validity} days
-    The email should be polite, professional, and include a call to action.
-    """
     
-    response = openai.chat.completions.create(
-        model="gpt-4-turbo",  # Use "gpt-4-turbo" for cost-effective performance
-        messages=[{"role": "system", "content": "You are a helpful assistant that writes professional emails."},
-                  {"role": "user", "content": prompt}]
-    )
-    print("here")
-    response_message = response.choices[0].message.content
-    print(response_message )
-    print("here2")
-    
-    if hasattr(response.choices[0].message, "content"):
-           print(response.choices[0].message)
-    
-    return response_message 
-
-'''
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant that writes professional emails."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    
-    return response["choices"][0]["message"]["content"]
-'''
-# Function to generate PDF quote
-def generate_pdf_quote(customer_name, product_details, price, validity):
-    filename = f"quote_{customer_name.replace(' ', '_')}.pdf"
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    pdf.cell(200, 10, txt="Quotation", ln=True, align="C")
-    pdf.ln(10)
-    
-    pdf.cell(200, 10, txt=f"Customer: {customer_name}", ln=True)
-    pdf.cell(200, 10, txt=f"Product/Service: {product_details}", ln=True)
-    pdf.cell(200, 10, txt=f"Price: ${price}", ln=True)
-    pdf.cell(200, 10, txt=f"Quote Validity: {validity} days", ln=True)
-
-    pdf.output(filename)
-    return filename
-
-# Function to send email with PDF attachment
-def send_email_with_pdf(recipient_email, subject, body, pdf_filename):
-    sender_email = "notifications3972@gmail.com"  # Replace with your email
-    sender_password = "tbbi eeyg mbuv ciqn"  # Replace with an app-specific password
-
-    msg = EmailMessage()
-    msg['From'] = sender_email
-    msg['To'] = recipient_email
-    msg['Subject'] = subject
-    msg.set_content(body)
-
-    with open(pdf_filename, 'rb') as f:
-        msg.add_attachment(f.read(), maintype='application', subtype='pdf', filename=pdf_filename)
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(sender_email, sender_password)
-        server.send_message(msg)
-    
-def save_raw_image_to_drive(lat, lon, filename="raw_satellite_image"):
-    """
-    Saves the raw, unmodified Sentinel-2 satellite image directly to Google Drive.
-    
-    Args:
-        lat (float): Latitude of the house.
-        lon (float): Longitude of the house.
-        filename (str): Name of the output image file (without extension).
-    
-    Returns:
-        str: Google Drive file name.
-    """
+def save_raw_image_to_drive(lat, lon):
     filename = generate_unique_id()
     print(lat, " + ", lon)
 
@@ -219,33 +134,6 @@ def download_google_maps_satellite(lat, lon):
         print("Error downloading image:", response.status_code)
         
     return filename
-        
-# Function to detect roofs using YOLOv8
-def detect_roofs(image_path, output_path="roof_detected.png"):
-    # Load YOLOv8 pre-trained model (best for object detection)
-    model = YOLO("yolov8n.pt")  # Use "yolov8m.pt" for better accuracy
-
-    # Load image
-    image = cv2.imread(image_path)
-
-    # Run inference
-    results = model(image)
-
-    # Draw detections on image
-    for result in results:
-        for box in result.boxes:
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            conf = box.conf[0]
-            label = f"Roof ({conf:.2f})"
-            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-    # Save & show image with detections
-    cv2.imwrite(output_path, image)
-    plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-    plt.axis("off")
-    plt.show()
-    print(f"Roof detection saved as {output_path}")
     
 def infer_krzak(filename3):
     # define the image url to use for inference
@@ -348,61 +236,7 @@ def infer_krzak(filename3):
     annotated_image_path = "annotated_output.jpg"
     cv2.imwrite(annotated_image_path, image)
     print(f"Annotated image saved as {annotated_image_path}")
-    
-'''
-    # load a pre-trained yolov8n model
-    model = get_model(model_id="taylor-swift-records/3")
-
-    # run inference on our chosen image, image can be a url, a numpy array, a PIL image, etc.
-    results = model.infer(image)[0]
-
-    # load the results into the supervision Detections api
-    detections = sv.Detections.from_inference(results)
-
-    # create supervision annotators
-    bounding_box_annotator = sv.BoxAnnotator()
-    label_annotator = sv.LabelAnnotator()
-
-    # annotate the image with our inference results
-    annotated_image = bounding_box_annotator.annotate(
-        scene=image, detections=detections)
-    annotated_image = label_annotator.annotate(
-        scene=annotated_image, detections=detections)
-        
-    # display the image
-    sv.plot_image(annotated_image)
-    
-'''
-
-def get_lat_lon(address, api_key):
-    """
-    Get the latitude and longitude for a given address using the Google Maps Geocoding API.
-    
-    Args:
-        address (str): The address to geocode.
-        api_key (str): Your Google Maps API key.
-    
-    Returns:
-        tuple: (latitude, longitude) if found, else (None, None).
-    """
-    base_url = "https://maps.googleapis.com/maps/api/geocode/json"
-    params = {
-        "address": address,
-        "key": api_key
-    }
-    response = requests.get(base_url, params=params)
-    
-    if response.status_code == 200:
-        data = response.json()
-        if data["status"] == "OK" and data["results"]:
-            location = data["results"][0]["geometry"]["location"]
-            return location["lat"], location["lng"]
-        else:
-            print("Geocoding error:", data.get("status"), data.get("error_message"))
-            return None, None
-    else:
-        print("HTTP error:", response.status_code)
-        return None, None
+   
 
 def generate_unique_id():
     """Generates a unique ID using uuid4."""
@@ -424,10 +258,12 @@ def generate():
     validity = int(request.form["validity"])
 
     # Generate AI-powered email
-    email_content = generate_quote_email(customer_name, product_details, price, validity)
+    email_content = Open.generate_quote_email(customer_name, product_details, price, validity)
+    
+    print("email generated")
 
     # Generate PDF
-    pdf_filename = generate_pdf_quote(customer_name, product_details, price, validity)
+    pdf_filename = GenPDF.generate_pdf_quote(customer_name, product_details, price, validity)
 
     # Store Quote in Database
     new_quote = Quote(
@@ -437,16 +273,12 @@ def generate():
         price=price,
         validity=validity,
         pdf_filename=pdf_filename
-    )
-    db.session.add(new_quote)
+        )
+    db.session.add(new_quote)    
     db.session.commit()
-
-    # Send Email with PDF
-    send_email_with_pdf(recipient_email, "Your Quote", email_content, pdf_filename)
-    
-    #lat, lon = 37.402572004102694, -121.8223697685583
-    #lat, lon = 37.7749, -122.4194  # Example: San Francisco
-    print("Roof Coming Below*********************************************************************")
+        
+    #Send Email with PDf    
+    Email.send_email_with_pdf(recipient_email, "Your Quote", email_content, pdf_filename)
     
     # Example usage:
     address = "3972 Myinda Dr. San Jose, CA. 95132"
@@ -454,7 +286,6 @@ def generate():
     #lat, lon = get_lat_lon(address, api_key)
     lat, lon = Geocoding.get_lat_lon(address, api_key)
     print(f"Latitude: {lat}, Longitude: {lon}")
-
     
     # Example Usage
 
@@ -465,8 +296,6 @@ def generate():
     
     filename2 = download_google_maps_satellite(lat, lon)
     print(filename2)
-    
-    #detect_roofs("1ff95725-5cbb-436d-a934-e035fdce4ee9.png")
     
     infer_krzak(filename2)
     
