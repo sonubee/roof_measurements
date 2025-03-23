@@ -24,6 +24,7 @@ from aiemail import Open
 from gen_pdf import GenPDF
 from send_email import Email
 from sat_image import Sat_Image
+from infer import Infer_Pic
 
 service_account = 'first-key@ee-notifications3972.iam.gserviceaccount.com'
 credentials = ee.ServiceAccountCredentials(service_account, 'ee-notifications3972-a04ee465a57f.json')
@@ -70,109 +71,6 @@ with app.app_context():
 admin = Admin(app, name="Quote Admin", template_mode="bootstrap3")
 admin.add_view(ModelView(Quote, db.session))
     
-def infer_krzak(filename3):
-    # define the image url to use for inference
-    
-    #image = cv2.imread(filename)
-    
-    print("here14.1")
-    
-    api_key="WC65G8Eh1ol0B7Aub5oW"
-    rf = Roboflow(api_key="WC65G8Eh1ol0B7Aub5oW")
-    print("here14.2")
-   
-    url = f"https://api.roboflow.com/?api_key={api_key}"
-    
-    print("here14.3")
-
-    response = requests.get(url)
-    
-    print("here14.4")
-
-    if response.status_code == 200:
-        workspace_info = response.json()
-        print("Active workspace info:")
-        print(workspace_info)
-    else:
-        print("Error:", response.status_code, response.text)
-        
-    print("here14.5")
-   
-    project = rf.workspace().project("my-first-project-bt5zl")
-    
-    print("here14.6")
-    
-    model = project.version(1).model
-    
-    print("here14.7")
-    
-    workspace = rf.workspace()
-    print("Workspace:", workspace)
-
-    # Replace 'your-project-name' with the exact project name from your dashboard.
-    project = workspace.project("krzak")
-    print("Project:", project)
-    
-    # Load your image
-    img = Image.open(filename3)
-
-    # Check the mode and convert to RGB if needed
-    if img.mode != "RGB":
-        img = img.convert("RGB")
-
-    # Save as JPEG
-    
-    if filename3.lower().endswith(".png"):
-        new_filename = os.path.splitext(filename3)[0] + ".jpg"
-        os.rename(filename3, new_filename)
-        print(f"Renamed '{filename3}' to '{new_filename}'")
-    else:
-        print(f"'{filename3}' is not a PNG file.")
-    
-    img.save(filename3, "JPEG")
-
-    # Check if the version exists
-    try:
-        model = project.version(1).model
-        print("Model loaded successfully:", model)
-    except Exception as e:
-        print("Error loading model:", e)
-        
-    # Local or URL image
-    prediction = model.predict(filename3).json()
-    
-    with open('pred_returned.json', 'r') as file:
-        # The 'with' statement ensures the file is automatically closed
-        # even if errors occur.
-        data = json.load(file)
-    
-    print(prediction)
- 
-    print("here14.8")
-    
-    image_path = filename3  # Replace with your image file path
-    image = cv2.imread(image_path)
-    
-    # Draw bounding boxes and labels on the image
-    for pred in prediction.get("predictions", []):
-        x = int(pred["x"])
-        y = int(pred["y"])
-        w = int(pred["width"])
-        h = int(pred["height"])
-        label = f"{pred['class']} {pred['confidence']:.2f}"
-        
-        # Draw rectangle (bounding box)
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        # Draw label above the rectangle
-        cv2.putText(image, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5, (0, 255, 0), 2)
- 
-    # Save the annotated image
-    annotated_image_path = "annotated_output.jpg"
-    cv2.imwrite(annotated_image_path, image)
-    print(f"Annotated image saved as {annotated_image_path}")
-   
-
 def generate_unique_id():
     """Generates a unique ID using uuid4."""
     return str(uuid.uuid4())
@@ -195,8 +93,6 @@ def generate():
     # Generate AI-powered email
     email_content = Open.generate_quote_email(customer_name, product_details, price, validity)
     
-    print("email generated")
-
     # Generate PDF
     pdf_filename = GenPDF.generate_pdf_quote(customer_name, product_details, price, validity)
 
@@ -217,19 +113,12 @@ def generate():
     
     # Example usage:
     address = "3972 Myinda Dr. San Jose, CA. 95132"
-    api_key = "AIzaSyBPl2BN22N1olCSEKphDwv822foR4PlYF4"  # Replace with your actual API key
-    #lat, lon = get_lat_lon(address, api_key)
+    api_key = "AIzaSyBPl2BN22N1olCSEKphDwv822foR4PlYF4"  
     lat, lon = Geocoding.get_lat_lon(address, api_key)
     print(f"Latitude: {lat}, Longitude: {lon}")
     
-    print("here14")
-    
-    filename2 = Sat_Image.download_google_maps_satellite(lat, lon)
-    print(filename2)
-    
-    infer_krzak(filename2)
-    
-    print("here15")    
+    map_filename = Sat_Image.download_google_maps_satellite(lat, lon)
+    Infer_Pic.infer_krzak(map_filename) 
     
     return "This is a valid response"  # Return a string
     

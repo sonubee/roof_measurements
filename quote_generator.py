@@ -22,7 +22,6 @@ def generate_quote_email(customer_name, product_details, price, validity):
     client = OpenAI(
     api_key = "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",
     )
-    print("here0")
     
     prompt = f"""
     Generate a professional email to {customer_name} for a quote.
@@ -37,13 +36,12 @@ def generate_quote_email(customer_name, product_details, price, validity):
         messages=[{"role": "system", "content": "You are a helpful assistant."},
                   {"role": "user", "content": prompt}]
     )
-    print("here")
+
     response_message = response.choices[0].message.content
-    print(response_message )
-    print("here2")
+    #print(response_message )
     
-    if hasattr(response.choices[0].message, "content"):
-           print(response.choices[0].message)
+    #if hasattr(response.choices[0].message, "content"):
+    #       print(response.choices[0].message)
     
     return response_message
     #return response.choices[0].message["content"]

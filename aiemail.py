@@ -19,9 +19,9 @@ class Open:
         )
     
         response_message = response.choices[0].message.content
-        print(response_message )
+        #print(response_message )
         
-        if hasattr(response.choices[0].message, "content"):
-               print(response.choices[0].message)
+        #if hasattr(response.choices[0].message, "content"):
+        #       print(response.choices[0].message)
         
         return response_message 
