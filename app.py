@@ -20,6 +20,11 @@ import numpy as np
 import torch
 from ultralytics import YOLO
 import matplotlib.pyplot as plt
+#from inference import get_model
+#import supervision as sv
+from roboflow import Roboflow
+from PIL import Image
+from get_coord import Geocoding
 
 service_account = 'first-key@ee-notifications3972.iam.gserviceaccount.com'
 credentials = ee.ServiceAccountCredentials(service_account, 'ee-notifications3972-a04ee465a57f.json')
@@ -213,6 +218,8 @@ def download_google_maps_satellite(lat, lon):
     else:
         print("Error downloading image:", response.status_code)
         
+    return filename
+        
 # Function to detect roofs using YOLOv8
 def detect_roofs(image_path, output_path="roof_detected.png"):
     # Load YOLOv8 pre-trained model (best for object detection)
@@ -239,6 +246,163 @@ def detect_roofs(image_path, output_path="roof_detected.png"):
     plt.axis("off")
     plt.show()
     print(f"Roof detection saved as {output_path}")
+    
+def infer_krzak(filename3):
+    # define the image url to use for inference
+    
+    #image = cv2.imread(filename)
+    
+    print("here14.1")
+    
+    api_key="WC65G8Eh1ol0B7Aub5oW"
+    rf = Roboflow(api_key="WC65G8Eh1ol0B7Aub5oW")
+    print("here14.2")
+   
+    url = f"https://api.roboflow.com/?api_key={api_key}"
+    
+    print("here14.3")
+
+    response = requests.get(url)
+    
+    print("here14.4")
+
+    if response.status_code == 200:
+        workspace_info = response.json()
+        print("Active workspace info:")
+        print(workspace_info)
+    else:
+        print("Error:", response.status_code, response.text)
+        
+    print("here14.5")
+   
+    project = rf.workspace().project("my-first-project-bt5zl")
+    
+    print("here14.6")
+    
+    model = project.version(1).model
+    
+    print("here14.7")
+    
+    workspace = rf.workspace()
+    print("Workspace:", workspace)
+
+    # Replace 'your-project-name' with the exact project name from your dashboard.
+    project = workspace.project("krzak")
+    print("Project:", project)
+    
+    # Load your image
+    img = Image.open(filename3)
+
+    # Check the mode and convert to RGB if needed
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+
+    # Save as JPEG
+    
+    if filename3.lower().endswith(".png"):
+        new_filename = os.path.splitext(filename3)[0] + ".jpg"
+        os.rename(filename3, new_filename)
+        print(f"Renamed '{filename3}' to '{new_filename}'")
+    else:
+        print(f"'{filename3}' is not a PNG file.")
+    
+    img.save(filename3, "JPEG")
+
+    # Check if the version exists
+    try:
+        model = project.version(1).model
+        print("Model loaded successfully:", model)
+    except Exception as e:
+        print("Error loading model:", e)
+        
+    # Local or URL image
+    prediction = model.predict(filename3).json()
+    
+    with open('pred_returned.json', 'r') as file:
+        # The 'with' statement ensures the file is automatically closed
+        # even if errors occur.
+        data = json.load(file)
+    
+    print(prediction)
+ 
+    print("here14.8")
+    
+    image_path = filename3  # Replace with your image file path
+    image = cv2.imread(image_path)
+    
+    # Draw bounding boxes and labels on the image
+    for pred in prediction.get("predictions", []):
+        x = int(pred["x"])
+        y = int(pred["y"])
+        w = int(pred["width"])
+        h = int(pred["height"])
+        label = f"{pred['class']} {pred['confidence']:.2f}"
+        
+        # Draw rectangle (bounding box)
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        # Draw label above the rectangle
+        cv2.putText(image, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, (0, 255, 0), 2)
+ 
+    # Save the annotated image
+    annotated_image_path = "annotated_output.jpg"
+    cv2.imwrite(annotated_image_path, image)
+    print(f"Annotated image saved as {annotated_image_path}")
+    
+'''
+    # load a pre-trained yolov8n model
+    model = get_model(model_id="taylor-swift-records/3")
+
+    # run inference on our chosen image, image can be a url, a numpy array, a PIL image, etc.
+    results = model.infer(image)[0]
+
+    # load the results into the supervision Detections api
+    detections = sv.Detections.from_inference(results)
+
+    # create supervision annotators
+    bounding_box_annotator = sv.BoxAnnotator()
+    label_annotator = sv.LabelAnnotator()
+
+    # annotate the image with our inference results
+    annotated_image = bounding_box_annotator.annotate(
+        scene=image, detections=detections)
+    annotated_image = label_annotator.annotate(
+        scene=annotated_image, detections=detections)
+        
+    # display the image
+    sv.plot_image(annotated_image)
+    
+'''
+
+def get_lat_lon(address, api_key):
+    """
+    Get the latitude and longitude for a given address using the Google Maps Geocoding API.
+    
+    Args:
+        address (str): The address to geocode.
+        api_key (str): Your Google Maps API key.
+    
+    Returns:
+        tuple: (latitude, longitude) if found, else (None, None).
+    """
+    base_url = "https://maps.googleapis.com/maps/api/geocode/json"
+    params = {
+        "address": address,
+        "key": api_key
+    }
+    response = requests.get(base_url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if data["status"] == "OK" and data["results"]:
+            location = data["results"][0]["geometry"]["location"]
+            return location["lat"], location["lng"]
+        else:
+            print("Geocoding error:", data.get("status"), data.get("error_message"))
+            return None, None
+    else:
+        print("HTTP error:", response.status_code)
+        return None, None
 
 def generate_unique_id():
     """Generates a unique ID using uuid4."""
@@ -280,18 +444,33 @@ def generate():
     # Send Email with PDF
     send_email_with_pdf(recipient_email, "Your Quote", email_content, pdf_filename)
     
-    lat, lon = 37.402572004102694, -121.8223697685583
+    #lat, lon = 37.402572004102694, -121.8223697685583
     #lat, lon = 37.7749, -122.4194  # Example: San Francisco
     print("Roof Coming Below*********************************************************************")
     
+    # Example usage:
+    address = "3972 Myinda Dr. San Jose, CA. 95132"
+    api_key = "AIzaSyBPl2BN22N1olCSEKphDwv822foR4PlYF4"  # Replace with your actual API key
+    #lat, lon = get_lat_lon(address, api_key)
+    lat, lon = Geocoding.get_lat_lon(address, api_key)
+    print(f"Latitude: {lat}, Longitude: {lon}")
+
+    
     # Example Usage
 
-    result = save_raw_image_to_drive(lat, lon)
-    print(result)
+    #result = save_raw_image_to_drive(lat, lon)
+    #print(result)
     
     print("here14")
     
-    detect_roofs("1ff95725-5cbb-436d-a934-e035fdce4ee9.png")
+    filename2 = download_google_maps_satellite(lat, lon)
+    print(filename2)
+    
+    #detect_roofs("1ff95725-5cbb-436d-a934-e035fdce4ee9.png")
+    
+    infer_krzak(filename2)
+    
+    print("here15")    
     
     return "This is a valid response"  # Return a string
     
