@@ -23,12 +23,17 @@ class Infer_Pic:
         else:
             print("Error:", response.status_code, response.text)
        
+        # Access your workspace and project (replace with your actual project name)
         project = rf.workspace().project("my-first-project-bt5zl")
-        model = project.version(1).model
-        
+        print("hello1")
+        print(project)
+        print("hello2")
+        # Select the version of your model you wish to use (replace 1 with your version number)
+        model = project.version(3).model
+        print("hello3")
         workspace = rf.workspace()
         print("Workspace:", workspace)
-
+        print("hello5")
         # Replace 'your-project-name' with the exact project name from your dashboard.
         project = workspace.project("krzak")
         print("Project:", project)
@@ -41,6 +46,8 @@ class Infer_Pic:
             img = img.convert("RGB")
 
         # Save as JPEG
+        print("hello6")
+
         
         if filename.lower().endswith(".png"):
             new_filename = os.path.splitext(filename)[0] + ".jpg"
@@ -61,10 +68,13 @@ class Infer_Pic:
         # Local or URL image
         prediction = model.predict(filename).json()
         
+        '''
+        # Function to read a local json file. Only for testing
         with open('pred_returned.json', 'r') as file:
             # The 'with' statement ensures the file is automatically closed
             # even if errors occur.
-            data = json.load(file)
+            prediction = json.load(file)
+        '''
         
         print(prediction)
         

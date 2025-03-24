@@ -80,7 +80,32 @@ def generate_unique_id():
 def home():
     quotes = Quote.query.all()  # Fetch all quotes from the database
     return render_template("index.html", quotes=quotes)
-
+    
+# Route to Generate Quote
+@app.route("/geocode", methods=["POST"])
+def geocode():  
+    
+    address = request.form["address"]
+    
+    api_key = "AIzaSyBPl2BN22N1olCSEKphDwv822foR4PlYF4"
+    
+    # Retrieve Lat Lon with Geocoordinates
+    lat, lon = Geocoding.get_lat_lon(address, api_key)
+    print(f"Latitude: {lat}, Longitude: {lon}")
+    
+    # Get the Sat view since we have the Lat & Lon
+    map_filename = Sat_Image.download_google_maps_satellite(lat, lon)
+    
+    # Infer on the Sat View we got
+    Infer_Pic.infer_krzak(map_filename) 
+    
+    return "This is a valid response"  # Return a string
+    
+# Run the Flask app
+if __name__ == "__main__":
+    app.run(debug=True)
+    
+'''
 # Route to Generate Quote
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -121,7 +146,8 @@ def generate():
     Infer_Pic.infer_krzak(map_filename) 
     
     return "This is a valid response"  # Return a string
-    
+
+
 # Route to View & Download Images
 @app.route("/images")
 def list_images():
@@ -133,7 +159,4 @@ def download_image(filename):
     """Download an image from the static/images directory."""
     file_path = os.path.join("static/images", filename)
     return send_file(file_path, as_attachment=True)
-
-# Run the Flask app
-if __name__ == "__main__":
-    app.run(debug=True)
+'''
