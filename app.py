@@ -25,6 +25,10 @@ from gen_pdf import GenPDF
 from send_email import Email
 from sat_image import Sat_Image
 from infer import Infer_Pic
+from solarAPI import SolarAPI
+import googlemaps
+import tkinter as tk
+from extract_home import Extract_Now
 
 service_account = 'first-key@ee-notifications3972.iam.gserviceaccount.com'
 credentials = ee.ServiceAccountCredentials(service_account, 'ee-notifications3972-a04ee465a57f.json')
@@ -78,6 +82,7 @@ def generate_unique_id():
 # Route to Home Page
 @app.route("/")
 def home():
+    
     quotes = Quote.query.all()  # Fetch all quotes from the database
     return render_template("index.html", quotes=quotes)
     
@@ -93,11 +98,15 @@ def geocode():
     lat, lon = Geocoding.get_lat_lon(address, api_key)
     print(f"Latitude: {lat}, Longitude: {lon}")
     
+    SolarAPI.get_roof_dim(lat, lon, api_key)
+    
     # Get the Sat view since we have the Lat & Lon
     map_filename = Sat_Image.download_google_maps_satellite(lat, lon)
     
     # Infer on the Sat View we got
     Infer_Pic.infer_krzak(map_filename) 
+    
+    Extract_Now.start_work(map_filename, lat, lon)
     
     return "This is a valid response"  # Return a string
     
