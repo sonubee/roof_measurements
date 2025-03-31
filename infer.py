@@ -6,15 +6,16 @@ import os
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+from get_keys import Get_Keys
 
 class Infer_Pic:
 
     def infer_krzak(filename):
         
-        model_version = 3
+        model_version = 4
 
-        api_key="WC65G8Eh1ol0B7Aub5oW"
-        rf = Roboflow(api_key="WC65G8Eh1ol0B7Aub5oW")
+        api_key=Get_Keys.get_roboflow_key()
+        rf = Roboflow(api_key)
        
         url = f"https://api.roboflow.com/?api_key={api_key}"
 
@@ -46,7 +47,7 @@ class Infer_Pic:
 
         if filename.lower().endswith(".png"):
             new_filename = os.path.splitext(filename)[0] + ".jpg"
-            os.rename(filename, new_filename)
+            os.replace(filename, new_filename)
         else:
             print(f"'{filename}' is not a PNG file.")
         

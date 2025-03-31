@@ -32,6 +32,8 @@ class SolarAPI:
              # Save the JSON data to a file
             with open("output.json", "w") as outfile:
                 json.dump(solarPotential, outfile, indent=2)
+                return area_meters2
         else:
             print("Error:", response.status_code)
             print(response.text)
+            return 0

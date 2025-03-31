@@ -1,14 +1,15 @@
 import ee
 import uuid
+from get_keys import Get_Keys
 
 class ToDrive:
 
-    service_account = 'first-key@ee-notifications3972.iam.gserviceaccount.com'
-    credentials = ee.ServiceAccountCredentials(service_account, 'ee-notifications3972-a04ee465a57f.json')
+    service_account, file_loc = Get_Keys.get_service_account()
+    credentials = ee.ServiceAccountCredentials(service_account, file_loc)
     ee.Initialize(credentials)
 
-    def save_raw_image_to_drive(lat, lon):
-        filename = generate_unique_id()
+    def save_raw_image_to_drive(lat, lon, address):
+        filename = address
         print(lat, " + ", lon)
 
         # Define the point for the house location
@@ -45,7 +46,3 @@ class ToDrive:
         print("Export started: Image will be available in Google Drive folder 'EarthEngineExports' as ", filename, ".tif")
 
         return f"Export started: Image will be available in Google Drive folder 'EarthEngineExports' as {filename}.tif"
-        
-def generate_unique_id():
-    """Generates a unique ID using uuid4."""
-    return str(uuid.uuid4())
