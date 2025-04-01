@@ -19,7 +19,6 @@ from PIL import Image
 from roboflow import Roboflow
 from get_coord import Geocoding
 from aiemail import Open
-from gen_pdf import GenPDF
 from send_email import Email
 from sat_image import Sat_Image
 from infer import Infer_Pic
@@ -29,6 +28,7 @@ import tkinter as tk
 from extract_home import Extract_Now
 from property_report import Property_Report
 from get_keys import Get_Keys
+from homesage import HomeSage
 
 api_key = Get_Keys.get_gcloud_key()
 
@@ -94,7 +94,18 @@ def geocode():
     
     Extract_Now.start_work(map_filename, lat, lon)
     
-    Property_Report.gen_report(address, roof_measurement, lat, lon, map_filename, "annotated_polygon.jpg", "cropped_buffer.png")
+    roofType = HomeSage.return_roof(address)
+    print(roofType)
+    
+    Property_Report.gen_report(address, roof_measurement, lat, lon, map_filename, "annotated_polygon.jpg", "cropped_buffer.png", roofType)
+    
+    data = {
+        "address": address,
+        "House Age": 30,
+        "Roof": roofType
+    }
+    
+    print(data)
     
     return "This is a valid response"  # Return a string
     

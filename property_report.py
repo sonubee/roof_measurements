@@ -3,7 +3,7 @@ from PIL import Image
 
 class Property_Report:
 
-    def gen_report(property_address, roof_measurement, latitude, longitude, satellite_image, annotated_polygon, cropped_buffer):
+    def gen_report(property_address, roof_measurement, latitude, longitude, satellite_image, annotated_polygon, cropped_buffer, roofType):
 
         # Create a PDF class instance
         pdf = FPDF()
@@ -22,6 +22,7 @@ class Property_Report:
         pdf.cell(0, 10, "Roof Measurement: " + str(roof_measurement) + " m²", ln=True)
         pdf.cell(0, 10, "Latitude: " + str(latitude), ln=True)
         pdf.cell(0, 10, "Longitude: " + str(longitude), ln=True)
+        pdf.cell(0, 10, "Roof Type: " + str(roofType), ln=True)
         pdf.ln(10)
 
         # Define image file paths (update these with your actual file names)
@@ -29,12 +30,9 @@ class Property_Report:
         # annotated_polygon = "annotated_polygon.jpg"
         # cropped_buffer = "cropped_buffer.png"
         
-        print("hello")
         img = Image.open(satellite_image)
-        print("hello1")
         # Save it as a new PNG file with correct formatting
         img.save(satellite_image, "PNG")
-        print("hello2")
 
         # Add the Satellite Image
         pdf.cell(0, 10, "Satellite Image:", ln=True)
