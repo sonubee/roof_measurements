@@ -1,4 +1,7 @@
 import pandas as pd
+from homesage import HomeSage
+import json
+import csv
 
 # Read the file (change to read_excel if needed)
 # For CSV:
@@ -25,3 +28,39 @@ filtered_df = result_df[result_df["Year Built"].between(1980, 1990, inclusive="b
 filtered_df.to_json("properties_1980_1990.json", orient="records", indent=2)
 
 print("Filtered JSON saved as properties_1980_1990.json")
+
+with open("properties_1980_1990.json", "r") as file:
+    data = json.load(file)
+
+# roofType = HomeSage.return_roof(address)
+
+for item in data:
+    # Process each item in the list
+    print(item)
+    item["Roof Type"] = HomeSage.return_roof(item["Full Address"])
+    print(item)
+    
+with open("properties_1980_1990.json", 'w') as file:
+    json.dump(data, file, indent=4) # indent for better readability
+    
+    """
+    Converts a JSON file to a CSV file.
+
+    Args:
+        json_filepath (str): Path to the input JSON file.
+        csv_filepath (str): Path to the output CSV file.
+    """
+with open("properties_1980_1990.json", 'r') as json_file, open("dads_report.csv", 'w', newline='') as csv_file:
+    data = json.load(json_file)
+    writer = csv.writer(csv_file)
+    
+    if isinstance(data, list):
+        if data:
+            header = data[0].keys()
+            writer.writerow(header)
+            for row in data:
+                writer.writerow(row.values())
+    elif isinstance(data, dict):
+        header = data.keys()
+        writer.writerow(header)
+        writer.writerow(data.values())
