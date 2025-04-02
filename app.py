@@ -99,14 +99,6 @@ def geocode():
     
     Property_Report.gen_report(address, roof_measurement, lat, lon, map_filename, "annotated_polygon.jpg", "cropped_buffer.png", roofType)
     
-    data = {
-        "address": address,
-        "House Age": 30,
-        "Roof": roofType
-    }
-    
-    print(data)
-    
     return "This is a valid response"  # Return a string
     
 # Run the Flask app

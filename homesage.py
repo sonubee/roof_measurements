@@ -1,12 +1,11 @@
 import requests
 import json
+from get_keys import Get_Keys
 
 class HomeSage:
 
     def return_roof(address):
-        headers = {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcwMGZkYjFkLWE0MjgtNDI4Yi04ODc1LTliZGU0MGMwN2QzNyIsImV4cCI6MTc1MTE0Njg0NjUuMDk3NzV9._ev4p-bSaARxdYneTFDFX_N1PCPus9sxuRotKkqdQjQ'
-        }
+        headers = Get_Keys.get_homesage()
 
         response = requests.get('https://developers.homesage.ai/api/properties/info/', headers=headers, params={'property_address': '3916 San Carlos Way Sacramento, CA'})
 
