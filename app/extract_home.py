@@ -3,56 +3,6 @@ import json
 import numpy as np
 import math
 
-class Extract_House:
-
-    # --- Helper Functions ---
-
-    def haversine(lat1, lon1, lat2, lon2):
-        """Calculate the Haversine distance in meters between two geographic points."""
-        R = 6371000  # Earth radius in meters
-        phi1 = math.radians(lat1)
-        phi2 = math.radians(lat2)
-        delta_phi = math.radians(lat2 - lat1)
-        delta_lambda = math.radians(lon2 - lon1)
-        a = math.sin(delta_phi/2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda/2) ** 2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        return R * c
-
-    def pixel_to_latlon(px, py, center_lat, center_lon, zoom, img_width, img_height):
-        """
-        Convert pixel coordinates (px,py) on a static map to geographic coordinates.
-        This function uses an approximate conversion for Google Maps' Mercator projection.
-        """
-        # Calculate meters per pixel at the given zoom level (approximation)
-        # 156543.03392 meters per pixel at zoom 0 at the equator
-        meters_per_pixel = 156543.03392 * math.cos(math.radians(center_lat)) / (2 ** zoom)
-        
-        # Assume the center of the image is at (img_width/2, img_height/2)
-        dx = px - img_width / 2.0  # positive dx means eastward
-        dy = py - img_height / 2.0 # positive dy means southward
-
-        # Calculate offset in meters
-        offset_east = dx * meters_per_pixel
-        offset_north = -dy * meters_per_pixel  # negative because pixel y increases downward
-
-        # Convert meter offsets to lat/lon differences
-        delta_lat = (offset_north / 6378137) * (180 / math.pi)  # Earth's radius in meters
-        delta_lon = (offset_east / (6378137 * math.cos(math.radians(center_lat)))) * (180 / math.pi)
-        
-        return center_lat + delta_lat, center_lon + delta_lon
-
-    def polygon_centroid(points):
-        """
-        Compute the centroid of a polygon given as a list of (x, y) points.
-        Uses the standard formula for the centroid of a polygon.
-        """
-        if len(points) == 0:
-            return (0, 0)
-        x_list = [p[0] for p in points]
-        y_list = [p[1] for p in points]
-        length = len(points)
-        return (sum(x_list) / length, sum(y_list) / length)
-
 class Extract_Now:
 
     # --- Main Code ---
