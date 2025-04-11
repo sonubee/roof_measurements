@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from roboflow import Roboflow
 from get_coord import Geocoding
-from aiemail import Open
 from send_email import Email
 from sat_image import Sat_Image
 from infer import Infer_Pic
