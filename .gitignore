@@ -4,3 +4,5 @@ MLS/
 *.xslx
 *.pdf
 *.png
+*.jpg
+__pycache__/
