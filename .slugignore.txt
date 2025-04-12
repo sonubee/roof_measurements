@@ -1,0 +1,8 @@
+MLS/
+*.pdf
+*.png
+*.jpg
+random_functions.py
+read_excel_sheet.py
+save_to_drive.py
+send_email.py
