@@ -87,9 +87,15 @@ def geocode():
     
     # Get the Sat view since we have the Lat & Lon
     map_filename = Sat_Image.download_google_maps_satellite(lat, lon, address, api_key)
+    # map_image = Sat_Image.return_google_maps_satellite_image(lat, lon, address, api_key)
+    print("after getting 2nd google map API image and before printing again in main class. is it the same?")
+    # print(map_image)
     
     # Infer on the Sat View we got
     Infer_Pic.infer_krzak(map_filename) 
+    print("before infer_roof")
+    # Infer_Pic.infer_roof(map_image)
+    print("got infer")
     
     Extract_Now.start_work(map_filename, lat, lon)
     
