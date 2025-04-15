@@ -35,43 +35,11 @@ print("INITIALIZED")
 
 app = Flask(__name__)
 
-# Check if running on Heroku (PostgreSQL) or locally (SQLite)
-if "DATABASE_URL" in os.environ:
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"].replace("postgres://", "postgresql://", 1)  # Heroku fix
-else:
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///quotes.db"  # Local SQLite
-
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
-
-migrate = Migrate(app, db)  # Initialize Flask-Migrate
-
-# Define Database Model
-class Quote(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    customer_name = db.Column(db.String(100), nullable=False)
-    recipient_email = db.Column(db.String(100), nullable=False)
-    product_details = db.Column(db.Text, nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    validity = db.Column(db.Integer, nullable=False)
-    pdf_filename = db.Column(db.String(100), nullable=False)
-    roof_square_feet = db.Column(db.Float, nullable=True)  # Roof Area
-    roof_image_url = db.Column(db.String(255), nullable=True)  # Store Image URL
-
-# Initialize Database
-with app.app_context():
-    db.create_all()
-    
-# Initialize Flask-Admin
-admin = Admin(app, name="Quote Admin", template_mode="bootstrap3")
-admin.add_view(ModelView(Quote, db.session))
-
 # Route to Home Page
 @app.route("/")
 def home():
     
-    quotes = Quote.query.all()  # Fetch all quotes from the database
-    return render_template("index.html", quotes=quotes)
+    return render_template("index.html")
     
 # Route to Generate Quote
 @app.route("/geocode", methods=["POST"])
