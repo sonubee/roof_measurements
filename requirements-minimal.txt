@@ -1,0 +1,19 @@
+Flask==3.1.0
+Flask-Admin==1.6.1
+Flask-Migrate==4.1.0
+Flask-SQLAlchemy==3.1.1
+earthengine-api==1.5.6
+geemap==0.35.3
+requests==2.32.3
+opencv-python==4.11.0.86
+numpy==2.1.1
+torch==2.6.0
+ultralytics==8.3.93
+matplotlib==3.10.1
+pillow==11.1.0
+roboflow==1.1.58
+googlemaps==4.10.0
+fpdf==1.7.2
+openai==1.66.3
+pandas==2.2.3
+psycopg2-binary==2.9.10  # if you are using PostgreSQL

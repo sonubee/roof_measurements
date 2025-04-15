@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Quote Generator - Address Input</title>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          text-align: center;
+          margin: 50px;
+      }
+      form {
+          width: 50%;
+          margin: auto;
+          padding: 20px;
+          border: 1px solid #ccc;
+          border-radius: 10px;
+      }
+      input, textarea {
+          width: 100%;
+          padding: 10px;
+          margin: 10px 0;
+          border-radius: 5px;
+      }
+      button {
+          padding: 10px 20px;
+          background-color: blue;
+          color: white;
+          border: none;
+          cursor: pointer;
+      }
+      button:hover {
+          background-color: darkblue;
+      }
+  </style>
+</head>
+<body>
+  <h1>Enter Home Address</h1>
+  <form action="/geocode" method="POST">
+      <input type="text" name="address" placeholder="Enter home address" required>
+      <button type="submit">Get Coordinates</button>
+  </form>
+</body>
+</html>
