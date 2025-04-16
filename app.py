@@ -45,7 +45,11 @@ def home():
 @app.route("/geocode", methods=["POST"])
 def geocode():  
     
+    print("here1")
+    
     address = request.form["address"]
+    
+    print("here2")
     
     # Retrieve Lat Lon with Geocoordinates
     lat, lon = Geocoding.get_lat_lon(address, api_key)
