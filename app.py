@@ -28,12 +28,15 @@ from extract_home import Extract_Now
 from property_report import Property_Report
 from get_keys import Get_Keys
 from homesage import HomeSage
+from fpdf import FPDF
+from flask import redirect, url_for, session
 
 api_key = Get_Keys.get_gcloud_key()
 
 print("INITIALIZED")
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key' # Required for session management
 
 # Route to Home Page
 @app.route("/")
@@ -45,11 +48,7 @@ def home():
 @app.route("/geocode", methods=["POST"])
 def geocode():  
     
-    print("here1")
-    
     address = request.form["address"]
-    
-    print("here2")
     
     # Retrieve Lat Lon with Geocoordinates
     lat, lon = Geocoding.get_lat_lon(address, api_key)
@@ -59,6 +58,7 @@ def geocode():
     
     # Get the Sat view since we have the Lat & Lon
     map_filename = Sat_Image.download_google_maps_satellite(lat, lon, address, api_key)
+    session['report_name'] = map_filename
     # map_image = Sat_Image.return_google_maps_satellite_image(lat, lon, address, api_key)
     print("after getting 2nd google map API image and before printing again in main class. is it the same?")
     # print(map_image)
@@ -74,9 +74,22 @@ def geocode():
     roofType = HomeSage.return_roof(address)
     print(roofType)
     
-    Property_Report.gen_report(address, roof_measurement, lat, lon, map_filename, "annotated_polygon.jpg", "cropped_buffer.png", roofType)
+    pdf = Property_Report.gen_report(address, roof_measurement, lat, lon, map_filename, "annotated_polygon.jpg", "cropped_buffer.png", roofType)
     
-    return "This is a valid response"  # Return a string
+    print("got pdf")
+    
+    return redirect(url_for('download_report'))
+    
+    #return "This is a valid response"  # Return a string
+    
+@app.route('/download-report')
+def download_report():
+    
+    map_filename = session.get('report_name')
+    print("map: ", map_filename)
+    
+    # Replace 'property_report.pdf' with the actual path to your generated PDF
+    return send_file(map_filename, as_attachment=True, download_name = map_filename)
     
 # Run the Flask app
 
