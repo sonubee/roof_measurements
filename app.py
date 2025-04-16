@@ -58,7 +58,6 @@ def geocode():
     
     # Get the Sat view since we have the Lat & Lon
     map_filename = Sat_Image.download_google_maps_satellite(lat, lon, address, api_key)
-    session['report_name'] = map_filename
     # map_image = Sat_Image.return_google_maps_satellite_image(lat, lon, address, api_key)
     print("after getting 2nd google map API image and before printing again in main class. is it the same?")
     # print(map_image)
@@ -74,9 +73,11 @@ def geocode():
     roofType = HomeSage.return_roof(address)
     print(roofType)
     
-    pdf = Property_Report.gen_report(address, roof_measurement, lat, lon, map_filename, "annotated_polygon.jpg", "cropped_buffer.png", roofType)
+    pdf, pdfAddress = Property_Report.gen_report(address, roof_measurement, lat, lon, map_filename, "annotated_polygon.jpg", "cropped_buffer.png", roofType)
     
     print("got pdf")
+    
+    session['report_name'] = pdfAddress
     
     return redirect(url_for('download_report'))
     

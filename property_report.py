@@ -53,5 +53,6 @@ class Property_Report:
         # Save the PDF to a file
         pdf.output(property_address + ".pdf")
         print("PDF report saved as " + property_address + ".pdf")
+        pdfAddress = property_address + ".pdf"
 
-        return pdf
+        return pdf, pdfAddress
