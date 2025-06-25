@@ -23,7 +23,6 @@ from sat_image import Sat_Image
 from infer import Infer_Pic
 from solarAPI import SolarAPI
 import googlemaps
-import tkinter as tk
 from extract_home import Extract_Now
 from property_report import Property_Report
 from get_keys import Get_Keys
