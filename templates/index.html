@@ -33,13 +33,42 @@
       button:hover {
           background-color: darkblue;
       }
+      .instructions {
+          text-align: left;
+          width: 50%;
+          margin: 20px auto;
+      }
+      .instructions h2 {
+          margin-bottom: 5px;
+      }
+      .instructions ol, .instructions ul {
+          margin: 5px 0 15px 20px;
+      }
   </style>
 </head>
 <body>
   <h1>Enter Home Address</h1>
   <form action="/geocode" method="POST">
       <input type="text" name="address" placeholder="Enter home address" required>
-      <button type="submit">Get Coordinates</button>
+      <button type="submit">Get Residential Roof Information</button>
   </form>
+  <div class="instructions">
+    <h2>Steps:</h2>
+    <ol>
+      <li>Enter a US Residential Address</li>
+      <li>This app will pull the Geocoordinates from Google Earth's API</li>
+      <li>Then it will snap a Satellite image of the house with Google Map's API</li>
+      <li>It will then infer a Instance Segmentation model I created on Roboflow to detect roof edges</li>
+      <li>It will pull the actual roof square footage from Google Solar's API</li>
+      <li>All of this information plus more</li>
+    </ol>
+    <h2>Notes:</h2>
+    <ul>
+      <li>Takes 30 secs to complete</li>
+      <li>Works on phones too</li>
+      <li>Currently detects all roof within image</li>
+      <li>Had another API giving Roof Type, but this is currently disabled for costs</li>
+    </ul>
+  </div>
 </body>
 </html>
